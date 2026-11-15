@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.browsers/
+.qa/
+.npm-cache/
+*.local
+.env
+.env.*
+!.env.example
+tsconfig.tsbuildinfo
+eligible-users.local.txt
+admin-test.local.txt
+
+# Keep backend code/answers and private project notes out of a public Pages repository.
+supabase/
+build-dashboard-function.mjs
+CLAUDE.md
+PROJECT_STATUS.md
+DESIGN_GUIDE.md
+.claude/
+*.prproj
+Adobe Premiere Pro Auto-Save/
+Adobe Premiere Pro Audio Previews/
