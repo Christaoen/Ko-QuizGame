@@ -1,0 +1,51 @@
+name: Publish quiz frontend
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/configure-pages@v5
+      - name: Validate public build configuration
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          test -n "$VITE_SUPABASE_URL" || { printf 'Set VITE_SUPABASE_URL in repository Variables.\n'; exit 1; }
+          test -n "$VITE_SUPABASE_PUBLISHABLE_KEY" || { printf 'Set VITE_SUPABASE_PUBLISHABLE_KEY in repository Variables.\n'; exit 1; }
+          case "$VITE_SUPABASE_URL" in https://*.supabase.co) ;; *) printf 'Project URL must be an https Supabase URL.\n'; exit 1 ;; esac
+          case "$VITE_SUPABASE_PUBLISHABLE_KEY" in sb_publishable_*) ;; *) printf 'Use an sb_publishable_ key, never a secret or service-role key.\n'; exit 1 ;; esac
+      - run: npm ci
+      - run: npx vitest run src/quiz.test.ts
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
